@@ -50,7 +50,7 @@ module.exports.login = async (req, res) => {
     }
 
     const token = jwt.sign({ id: captain._id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
+      expiresIn: "1d",
     });
 
     delete captain._doc.password;

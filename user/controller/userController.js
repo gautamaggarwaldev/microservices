@@ -2,6 +2,9 @@ const userModel = require("../models/userModel.js");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const blacklistTokenModel = require("../models/blacklistTokenModel.js");
+const { subscribeToQueue } = require("../../ride/service/rabbit.js");
+const EventEmitter = require('events');
+const rideEventEmitter = new EventEmitter();
 
 module.exports.register = async (req, res) => {
   try {
@@ -21,7 +24,9 @@ module.exports.register = async (req, res) => {
     });
     res.cookie("token", token);
 
-    res.status(201).json({ message: "User registered successfully", token, newUser });
+    res
+      .status(201)
+      .json({ message: "User registered successfully", token, newUser });
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });
   }
@@ -75,3 +80,20 @@ module.exports.getProfile = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+module.exports.acceptedRide = async (req, res) => {
+  rideEventEmitter.once("ride-accepted", (data) => {
+    // Listen for the next accepted ride event
+    res.send(data);
+  });
+
+  // Set timeout for long polling (e.g., 30 seconds)
+  setTimeout(() => {
+    res.status(204).send();
+  }, 30000);
+};
+
+subscribeToQueue("ride-accepted", async (msg) => {
+  const data = JSON.parse(msg);
+  rideEventEmitter.emit("ride-accepted", data);
+});
