@@ -1,6 +1,7 @@
 const userModel = require("../models/userModel.js");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const blacklistTokenModel = require("../models/blacklistTokenModel.js");
 
 module.exports.register = async (req, res) => {
   try {
@@ -20,7 +21,7 @@ module.exports.register = async (req, res) => {
     });
     res.cookie("token", token);
 
-    res.status(201).json({ message: "User registered successfully", token });
+    res.status(201).json({ message: "User registered successfully", token, newUser });
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });
   }
@@ -58,7 +59,7 @@ module.exports.login = async (req, res) => {
 module.exports.logout = async (req, res) => {
   try {
     const token = req.cookies.token;
-    await blacklisttokenModel.create({ token });
+    await blacklistTokenModel.create({ token });
     res.clearCookie("token");
     res.send({ message: "User logged out successfully" });
   } catch (error) {
